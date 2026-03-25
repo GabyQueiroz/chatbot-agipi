@@ -1,0 +1,5 @@
+{
+  "signature": "8775-1773935067687558400",
+  "embedding_model_name": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "chunks_total": 8775
+}
