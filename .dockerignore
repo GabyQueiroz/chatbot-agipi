@@ -1,0 +1,12 @@
+.git
+__pycache__
+.venv
+venv
+env
+*.log
+saida/cache_retriever.joblib
+saida/professional_rag_cache_curated.joblib
+saida/professional_rag_cache_json.joblib
+saida/professional_rag_cache_txt.joblib
+saida/rag_retriever_cache_txt.joblib
+saida/test_rag_cache.joblib
