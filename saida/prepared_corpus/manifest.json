@@ -1,0 +1,18 @@
+{
+  "documents_total": 667,
+  "chunks_total": 8775,
+  "chunk_size": 220,
+  "overlap": 40,
+  "corpora": [
+    {
+      "corpus": "Atos Normativos INPI",
+      "documents": 131,
+      "chunks": 1214
+    },
+    {
+      "corpus": "Base Geral JSON",
+      "documents": 536,
+      "chunks": 7561
+    }
+  ]
+}
