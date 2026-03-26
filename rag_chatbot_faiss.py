@@ -312,7 +312,7 @@ class FaissKnowledgeBase:
         self.chunks = load_chunks(self.chunks_path)
         self.chunk_position_by_id = {chunk.chunk_id: idx for idx, chunk in enumerate(self.chunks)}
         self._build_lexical_index()
-        self.signature = f"{len(self.chunks)}-{self.chunks_path.stat().st_mtime_ns}"
+        self.signature = f"{len(self.chunks)}-{self.chunks_path.stat().st_size}"
         index_path = self.index_dir / "index.faiss"
         meta_path = self.index_dir / "meta.json"
 
