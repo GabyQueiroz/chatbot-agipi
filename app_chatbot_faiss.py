@@ -52,15 +52,16 @@ def load_question_bank(base_path: Path) -> pd.DataFrame:
     return combined
 
 
+@st.cache_resource
+def load_chatbot(base_path: Path):
+    return build_faiss_chatbot_from_env(base_path)
+
+
 st.set_page_config(page_title="Chatbot AGIPI", page_icon="💬", layout="wide")
 
 st.markdown("<h1 style='font-size: 3rem; font-weight: 800; margin-bottom: 0.25rem;'>Chatbot AGIPI</h1>", unsafe_allow_html=True)
 
 question_bank = load_question_bank(BASE_PATH)
-
-if "faiss_chatbot" not in st.session_state:
-    with st.spinner("Carregando base, embeddings e indice FAISS..."):
-        st.session_state.faiss_chatbot = build_faiss_chatbot_from_env(BASE_PATH)
 
 if "faiss_messages" not in st.session_state:
     st.session_state.faiss_messages = [
@@ -106,7 +107,8 @@ if prompt:
     history = st.session_state.faiss_messages[:-1]
     with st.chat_message("assistant"):
         with st.spinner("Consultando o indice FAISS e gerando resposta..."):
-            result = st.session_state.faiss_chatbot.answer(prompt, history=history, retrieve_k=retrieve_k)
+            chatbot = load_chatbot(BASE_PATH)
+            result = chatbot.answer(prompt, history=history, retrieve_k=retrieve_k)
         st.markdown(result["answer"])
         if result.get("follow_up_suggestions"):
             st.caption("Voce tambem pode perguntar: " + " | ".join(result["follow_up_suggestions"][:3]))
