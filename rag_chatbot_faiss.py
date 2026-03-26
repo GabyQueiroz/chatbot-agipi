@@ -28,7 +28,7 @@ STOPWORDS = {
     "a", "as", "o", "os", "um", "uma", "uns", "umas", "de", "da", "das", "do", "dos", "e", "em", "no", "na",
     "nos", "nas", "para", "por", "com", "sem", "sobre", "que", "qual", "quais", "como", "tem", "ha", "algum",
     "alguma", "alguns", "algumas", "ser", "seja", "sao", "foi", "sido", "ao", "aos", "ou", "se", "sua", "suas",
-    "seu", "seus", "uepg",
+    "seu", "seus",
 }
 
 
@@ -113,6 +113,18 @@ def expand_query_terms(question: str) -> list[str]:
     terms = set(tokenize_for_search(question))
     normalized = normalize_text(question)
 
+    if "agipi" in normalized:
+        terms.update({"agipi", "inovacao", "propriedade", "intelectual", "uepg"})
+    if "uepg" in normalized:
+        terms.update({"uepg", "universidade", "ponta", "grossa"})
+    if "ageuni" in normalized:
+        terms.update({"ageuni", "inovacao", "regional", "desenvolvimento"})
+    if "epitec" in normalized:
+        terms.update({"epitec", "propriedade", "intelectual", "patente", "registro"})
+    if "inprotec" in normalized:
+        terms.update({"inprotec", "incubadora", "startup", "empreendedorismo"})
+    if "inovacao" in normalized:
+        terms.update({"inovacao", "tecnologica", "cientifica", "ecossistema"})
     if "software" in normalized or "programa de computador" in normalized or "programa" in terms:
         terms.update({"software", "programa", "computador", "registro"})
     if "registro" in normalized or "registr" in normalized:
@@ -225,6 +237,7 @@ class FAQAnswerBank:
 
     def _heuristic_match(self, question: str) -> FAQEntry | None:
         normalized = normalize_question_key(question)
+        normalized_semantic = normalize_text(question)
         definition_intents = (
             "o que e",
             "oque e",
@@ -235,15 +248,29 @@ class FAQAnswerBank:
             "conceito",
             "qual e",
         )
-        if not any(intent in normalized for intent in definition_intents):
-            return None
-
         priority_pairs = [
             ("ageuni", "o que é o programa ageuni?"),
             ("agipi", "o que é a agipi da uepg?"),
             ("epitec", "o que é o epitec dentro da agipi?"),
             ("inprotec", "o que é o inprotec dentro da agipi?"),
         ]
+        short_aliases = {
+            "agipi": "o que é a agipi da uepg?",
+            "uepg": "o que é a agipi da uepg?",
+            "ageuni": "o que é o programa ageuni?",
+            "epitec": "o que é o epitec dentro da agipi?",
+            "inprotec": "o que é o inprotec dentro da agipi?",
+            "inovacao": "o que é inovação tecnológica?",
+        }
+        if normalized_semantic in short_aliases:
+            return self.exact_map.get(short_aliases[normalized_semantic])
+
+        if normalized_semantic in ("o que e inovacao", "oque e inovacao", "explique inovacao"):
+            return self.exact_map.get("o que é inovação tecnológica?")
+
+        if not any(intent in normalized for intent in definition_intents):
+            return None
+
         for keyword, target_question in priority_pairs:
             if keyword in normalized:
                 return self.exact_map.get(target_question)
@@ -464,7 +491,9 @@ class FAISSRAGChatbot:
         guide_matches = self.question_guide.match(question, top_k=3) if self.question_guide else []
         follow_up_suggestions = self._build_follow_up_suggestions(question, guide_matches)
         faq_match, faq_score = self.faq_bank.match(question) if self.faq_bank else (None, 0.0)
-        if faq_match is not None and faq_score >= 0.78:
+        short_question = len(tokenize_for_search(question)) <= 3 or len(normalize_question_key(question)) <= 24
+        faq_threshold = 0.35 if short_question else 0.78
+        if faq_match is not None and faq_score >= faq_threshold:
             answer = self._format_faq_answer(faq_match, follow_up_suggestions)
             sources = self._faq_sources(faq_match)
             suggested_category = faq_match.category
